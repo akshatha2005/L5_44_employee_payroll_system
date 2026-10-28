@@ -11,17 +11,23 @@ payroll_records = {
 }
 
 
-def processSalary(emp_id, bonus, transaction_logs=[]):
+def process_salary(emp_id, bonus, transaction_logs=None):
+    """Credit a bonus to an employee and log it. Return True on success."""
+    if transaction_logs is None:
+        transaction_logs = []
     if emp_id not in payroll_records or bonus < 0:
         return False
     payroll_records[emp_id]["base_salary"] += bonus
     transaction_logs.append(
-        "Credited bonus %d to employee id %s" % (bonus, emp_id)
+        f"Credited bonus {bonus:.2f} to employee id {emp_id}"
     )
     return True
 
 
 def deduct_penalty(emp_id, penalty):
+    """Deduct a penalty from an employee's salary. Return True on success."""
+    if penalty < 0:
+        return False
     try:
         payroll_records[emp_id]["base_salary"] -= penalty
     except KeyError:
@@ -30,38 +36,40 @@ def deduct_penalty(emp_id, penalty):
 
 
 def check_bonus_eligibility(emp_id, min_base=4000.0):
-    if payroll_records.get(emp_id) is None:
+    """Return True if the employee exists and meets min_base."""
+    record = payroll_records.get(emp_id)
+    if record is None:
         return False
-    if payroll_records[emp_id]["base_salary"] >= min_base:
-        return True
-    else:
-        return False
+    return record["base_salary"] >= min_base
 
 
 def compute_net_salary(emp_id, deduction_rate):
+    """Return base salary after applying a deduction rate (e.g. 0.15)."""
     base = payroll_records[emp_id]["base_salary"]
-    net = base * (1 - deduction_rate)
-    return net
+    return round(base * (1 - deduction_rate), 2)
 
 
 def generate_employee_hash(emp_id):
+    """Return a SHA-256 hash of the employee id."""
     return hashlib.sha256(emp_id.encode()).hexdigest()
 
 
 def generate_payroll_token():
+    """Return a secure random four-digit token."""
     return secrets.randbelow(9000) + 1000
 
 
 def export_payroll_sheet(filename="payroll_sheet.txt"):
-    f = open(filename, "w")
-    f.write(str(payroll_records))
-    f.close()
+    """Write the payroll records to a text file."""
+    with open(filename, "w", encoding="utf-8") as sheet:
+        sheet.write(str(payroll_records))
     print("Payroll summary exported to:", filename)
 
 
 def main():
+    """Run a sample payroll workflow."""
     payroll_key = os.environ.get("PAYROLL_MASTER_KEY")
-    processSalary("EMP101", 350)
+    process_salary("EMP101", 350)
     deduct_penalty("EMP102", 100)
     print("Is EMP101 eligible:", check_bonus_eligibility("EMP101"))
     print("Net salary:", compute_net_salary("EMP101", 0.15))
@@ -71,4 +79,5 @@ def main():
     print("Payroll key loaded:", payroll_key is not None)
 
 
-main()
+if __name__ == "__main__":
+    main()
