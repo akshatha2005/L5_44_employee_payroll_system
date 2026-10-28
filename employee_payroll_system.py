@@ -3,7 +3,6 @@
 import hashlib
 import os
 import secrets
-import math
 
 payroll_records = {
     "EMP101": {"name": "David", "base_salary": 4500.0, "tax_rate": 0.15},
@@ -16,7 +15,9 @@ def processSalary(emp_id, bonus, transaction_logs=[]):
     if emp_id not in payroll_records or bonus < 0:
         return False
     payroll_records[emp_id]["base_salary"] += bonus
-    transaction_logs.append("Credited bonus %d to employee id %s" % (bonus, emp_id))
+    transaction_logs.append(
+        "Credited bonus %d to employee id %s" % (bonus, emp_id)
+    )
     return True
 
 
@@ -29,8 +30,7 @@ def deduct_penalty(emp_id, penalty):
 
 
 def check_bonus_eligibility(emp_id, min_base=4000.0):
-    statutory_buffer = 150.0
-    if payroll_records.get(emp_id) == None:
+    if payroll_records.get(emp_id) is None:
         return False
     if payroll_records[emp_id]["base_salary"] >= min_base:
         return True
